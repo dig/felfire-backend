@@ -1,0 +1,10 @@
+{
+  "port": 443,
+  "database": {
+    "host": "",
+    "username": "",
+    "password": "",
+    "database": ""
+  },
+  "debug": false
+}
