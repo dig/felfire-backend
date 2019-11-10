@@ -4,7 +4,8 @@
     "host": "",
     "username": "",
     "password": "",
-    "database": ""
+    "database": "",
+    "port": 27017
   },
   "debug": false
 }
