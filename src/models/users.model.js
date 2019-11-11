@@ -7,6 +7,7 @@ const userSchema = new Schema({
   password: { type: String, required: true },
   salt: { type: String, required: true },
   permissionLevel: { type: Number, default: 1 },
+  verified: { type: Number, default: 0 },
   created: { type: Date, default: Date.now }
 });
 
@@ -15,6 +16,10 @@ const User = mongoose.model('Users', userSchema);
 exports.createUser = (userData) => {
   const user = new User(userData);
   return user.save();
+};
+
+exports.findById = (userId) => {
+  return User.find({_id: userId});
 };
 
 exports.findByEmail = (email) => {

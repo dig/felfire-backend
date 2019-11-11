@@ -37,34 +37,38 @@ exports.login = (req, res) => {
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
   } else {
-    try {
-      //--- Access token
-      let payload = {
-        userId : req.body.userId
-      };
-      let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
-
-      //--- Refresh token
-      let randomBytes = crypto.randomBytes(12).toString('base64');
-      let hash = crypto.createHmac('sha512', randomBytes).update(req.body.userId + jwtSecret).digest('base64');
-      let b = Buffer.from(hash);
-      let refreshToken = b.toString('base64');
-
-      TokenModel.deleteByUserAgent(req.body.userId, req.useragent.browser, req.useragent.os).then(() => {
-        TokenModel.createToken({
-          userId : req.body.userId,
-          refreshToken : refreshToken,
-          userAgent : {
-            browser : req.useragent.browser,
-            os : req.useragent.os
-          },
-          createdBy :  req.header('x-forwarded-for') || req.connection.remoteAddress
-        }).then((result) => {
-          res.status(201).send({accessToken: token, refreshToken: refreshToken});
+    if (req.body.verified >= 1) {
+      try {
+        //--- Access token
+        let payload = {
+          userId : req.body.userId
+        };
+        let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+  
+        //--- Refresh token
+        let randomBytes = crypto.randomBytes(12).toString('base64');
+        let hash = crypto.createHmac('sha512', randomBytes).update(req.body.userId + jwtSecret).digest('base64');
+        let b = Buffer.from(hash);
+        let refreshToken = b.toString('base64');
+  
+        TokenModel.deleteByUserAgent(req.body.userId, req.useragent.browser, req.useragent.os).then(() => {
+          TokenModel.createToken({
+            userId : req.body.userId,
+            refreshToken : refreshToken,
+            userAgent : {
+              browser : req.useragent.browser,
+              os : req.useragent.os
+            },
+            createdBy :  req.header('x-forwarded-for') || req.connection.remoteAddress
+          }).then((result) => {
+            res.status(201).send({accessToken: token, refreshToken: refreshToken});
+          });
         });
-      });
-    } catch (err) {
-      res.status(500).send({errors: err});
+      } catch (err) {
+        res.status(500).send({errors: err});
+      }
+    } else {
+      res.status(201).send({email: req.body.email, verified: false});
     }
   }
 };
