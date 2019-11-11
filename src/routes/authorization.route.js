@@ -8,7 +8,7 @@ exports.routesConfig = function (app) {
     VerifyUserMiddleware.isPasswordAndUserMatch,
     AuthorizationController.login
   ]);
-  app.post('/authenticate/refresh', [
+  app.get('/authenticate/refresh', [
     AuthorizationController.validate('refresh'),
     AuthValidationMiddleware.validJWTNeeded,
     AuthValidationMiddleware.validRefreshNeeded,
