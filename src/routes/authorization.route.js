@@ -10,8 +10,8 @@ exports.routesConfig = function (app) {
   ]);
   app.get('/authenticate/refresh', [
     AuthorizationController.validate('refresh'),
-    AuthValidationMiddleware.validJWTNeeded,
+    // AuthValidationMiddleware.validJWTNeeded,
     AuthValidationMiddleware.validRefreshNeeded,
-    AuthorizationController.login
+    AuthorizationController.refresh_token
   ]);
 };

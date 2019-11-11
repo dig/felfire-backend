@@ -35,6 +35,20 @@ exports.findByUserIdAndToken = (userId, refreshToken) => {
   });
 };
 
+exports.updateByUserIdAndUserAgent = (userId, browser, os, refreshToken) => {
+  return Token.findOneAndUpdate({
+    userId: userId,
+    userAgent : {
+      browser : browser,
+      os : os
+    }
+  }, {
+    '$set': {
+      refreshToken : refreshToken
+    }
+  });
+};
+
 exports.deleteById = (tokenId) => {
   return Token.deleteOne({
     _id : tokenId

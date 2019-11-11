@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken'),
     crypto = require('crypto');
 
 exports.validRefreshNeeded = (req, res, next) => {
-  TokenModel.findByUserIdAndToken(req.jwt.userId, req.body.refreshToken).then((token) => {
-    if (token) {
-      req.body = req.jwt;
+  TokenModel.findByToken(req.body.refreshToken).then((token) => {
+    if (token[0]) {
+      req.body.userId = token[0].userId;
       return next();
     } else {
       return res.status(400).send({error: 'invalid refresh token'});

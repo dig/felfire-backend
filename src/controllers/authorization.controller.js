@@ -61,13 +61,28 @@ exports.login = (req, res) => {
           createdBy :  req.header('x-forwarded-for') || req.connection.remoteAddress
         }).then((result) => {
           res.status(201).send({accessToken: token, refreshToken: refreshToken});
-
-          //--- Delete last token
-          TokenModel.findByUserId(req.body.userId).then((tokens) => {
-            if (tokens.length > 5) tokens[0].remove();
-          });
         });
       });
+    } catch (err) {
+      res.status(500).send({errors: err});
+    }
+  }
+};
+
+exports.refresh_token = (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    res.status(422).json({ errors: errors.array() });
+  } else {
+    try {
+      //--- Access token
+      let payload = {
+        userId : req.body.userId
+      };
+      let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+
+      res.status(201).send({accessToken: token});
     } catch (err) {
       res.status(500).send({errors: err});
     }
