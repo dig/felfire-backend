@@ -9,7 +9,8 @@ const options = {
   reconnectInterval: 500,
   poolSize: 10,
   bufferMaxEntries: 0,
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 };
 
 const connectWithRetry = () => {

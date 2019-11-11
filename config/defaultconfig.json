@@ -7,5 +7,6 @@
     "database": "",
     "port": 27017
   },
+  "jwtSecret": "",
   "debug": false
 }
