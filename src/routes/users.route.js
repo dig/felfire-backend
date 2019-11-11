@@ -5,4 +5,8 @@ exports.routesConfig = function (app) {
     UsersController.validate('insert'),
     UsersController.insert
   ]);
+  app.post('/users/forgot/password', [
+    UsersController.validate('forgotPassword'),
+    UsersController.forgotPassword
+  ]);
 };

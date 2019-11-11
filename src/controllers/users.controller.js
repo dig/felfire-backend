@@ -31,6 +31,21 @@ exports.validate = (method) => {
           .isLength({ min: 5, max: 60 }).withMessage('Must be between 5 and 60 characters.')
       ]   
     }
+
+    case 'forgotPassword': {
+      return [ 
+        body('email', 'email doesn\'t exist')
+          .exists()
+          .isString()
+          .isEmail().withMessage('Invalid format.')
+          .isLength({ min: 5, max: 48 }).withMessage('Must be between 5 and 48 characters.')
+          .custom(val => {
+            return UserModel.findByEmail(val).then(users => {
+              if (users.length <= 0) return Promise.reject();
+            });
+          }).withMessage('Email already exists.')
+      ]  
+    }
   }
 }
 
@@ -51,5 +66,16 @@ exports.insert = (req, res) => {
     }).then((result) => {
       res.status(201).send();
     });
+  }
+};
+
+exports.forgotPassword = (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    res.status(422).json({ errors: errors.array() });
+  } else {
+    //--- TODO: Send email
+    res.status(201).send();
   }
 };
