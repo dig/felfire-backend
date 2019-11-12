@@ -8,5 +8,23 @@
     "port": 27017
   },
   "jwtSecret": "",
+  "email": {
+    "provider": "SendGrid",
+    "apiKey": "",
+    "templates": {
+      "EMAIL_VERIFICATION": {
+        "subject": "FelFire Account Verification",
+        "from": "verify@felfire.app",
+        "text": "test",
+        "html": "test"
+      },
+      "FORGOT_PASSWORD": {
+        "subject": "FelFire Password Reset",
+        "from": "reset@felfire.app",
+        "text": "test",
+        "html": "test"
+      }
+    }
+  },
   "debug": false
 }

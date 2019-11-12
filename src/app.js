@@ -5,6 +5,7 @@ const fs = require('fs'),
     bodyParser = require('body-parser'),
     multer = require('multer'),
     useragent = require('express-useragent'),
+    sgMail = require('@sendgrid/mail'),
     config = require('../config/config.json');
 
 const options = {
@@ -14,6 +15,7 @@ const options = {
 
 const app = express();
 const upload = multer();
+sgMail.setApiKey(config.email.apiKey);
 
 app.use(upload.array()); // multipart/form-data
 app.use(bodyParser.json()); // application/json

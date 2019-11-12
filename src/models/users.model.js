@@ -7,7 +7,7 @@ const userSchema = new Schema({
   password: { type: String, required: true },
   salt: { type: String, required: true },
   permissionLevel: { type: Number, default: 1 },
-  verified: { type: Number, default: 0 },
+  verified: { type: Boolean, default: false },
   created: { type: Date, default: Date.now }
 });
 
@@ -28,4 +28,8 @@ exports.findByEmail = (email) => {
 
 exports.findByUsername = (username) => {
   return User.find({username: username});
+};
+
+exports.verified = (userId) => {
+  return User.findByIdAndUpdate(userId, { '$set': { verified: true } });
 };

@@ -37,7 +37,7 @@ exports.login = (req, res) => {
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
   } else {
-    if (req.body.verified >= 1) {
+    if (req.body.verified) {
       try {
         //--- Access token
         let payload = {
