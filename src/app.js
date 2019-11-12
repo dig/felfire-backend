@@ -1,4 +1,5 @@
 const fs = require('fs'),
+    path = require('path'),
     http = require('http'),
     https = require('https'),
     express = require('express'),
@@ -47,4 +48,4 @@ const server = https.createServer(options, app).listen(config.port, function() {
   console.log('Felfire backend listening on port ' + config.port);
 });
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname + 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/views/index.html')));

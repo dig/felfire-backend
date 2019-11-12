@@ -1,11 +1,12 @@
 const mongoose = require('../common/services/mongoose.service').mongoose;
 const Schema = mongoose.Schema;
+const moment = require('moment');
 
 const verificationSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
   provider: { type: String, default: 'email' },
   token: { type: String, required: true },
-  alive: { type: Boolean, default: true },
+  used: { type: Boolean, default: false },
   created: { type: Date, default: Date.now }
 });
 
@@ -20,30 +21,34 @@ exports.findByUserId = (userId) => {
   return Verification.find({userId: userId});
 };
 
-exports.findByTokenAndProvider = (token, provider) => {
-  return Verification.find({
+exports.findByTokenAndProvider = (token, provider, expired = false) => {
+  let search = {
     provider: provider,
-    token: token
-  });
+    token: token,
+    used: false
+  };
+
+  if (!expired) {
+    search.created = {
+      "$gt": moment().subtract(15, 'minutes')
+    }; 
+  }
+
+  return Verification.find(search);
 };
 
-exports.findByUserIdAndProvider = (userId, provider, alive) => {
-  return Verification.find({
+exports.findByUserIdAndProvider = (userId, provider, expired = false) => {
+  let search = {
     userId: userId,
     provider: provider,
-    alive: alive
-  });
-};
+    used: false
+  };
 
-exports.updateByUserIdAndProvider = (userId, provider, alive, newToken) => {
-  return Token.findOneAndUpdate({
-    userId: userId,
-    provider: provider,
-    alive: alive
-  }, {
-    '$set': {
-      token : newToken,
-      created : Date.now
-    }
-  });
+  if (!expired) {
+    search.created = {
+      "$gt": moment().subtract(15, 'minutes')
+    }; 
+  }
+
+  return Verification.find(search);
 };

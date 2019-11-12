@@ -1,5 +1,5 @@
 const crypto = require('crypto'),
-    util = require('util'),
+    path = require('path'),
     sgMail = require('@sendgrid/mail'),
     { body, param, validationResult } = require('express-validator'),
     config = require('../../config/config.json');
@@ -61,7 +61,7 @@ exports.validate = (method) => {
           .isString()
           .custom(val => {
             return VerificationModel.findByTokenAndProvider(val, 'email').then(tokens => {
-              if (tokens.length <= 0) return Promise.reject();
+              if (tokens.length <= 0 || tokens[0].used) return Promise.reject();
             });
           })
       ]  
@@ -77,33 +77,29 @@ exports.insert = (req, res) => {
   } else {
     let salt = crypto.randomBytes(16).toString('base64');
     let hash = crypto.createHmac('sha512', salt).update(req.body.password).digest('base64');
-  
+
+    let generatedToken = crypto.randomBytes(16).toString('hex');
+
     UserModel.createUser({
       username : req.body.username,
       email : req.body.email,
       password : hash,
       salt : salt
-    }).then((user) => {
-      let generatedToken = crypto.randomBytes(16).toString('hex');
-
-      VerificationModel.createVerification({
-        userId : user._id,
-        provider : 'email',
-        token : generatedToken
-      })
-      .then(() => {
-        sgMail.send({
-          to: req.body.email,
-          from: config.email.templates.EMAIL_VERIFICATION.from,
-          subject: config.email.templates.EMAIL_VERIFICATION.subject,
-          text: util.format(config.email.templates.EMAIL_VERIFICATION.text, generatedToken),
-          html: util.format(config.email.templates.EMAIL_VERIFICATION.html, generatedToken),
-        })
-        .then(() => res.status(201).send())
-        .catch(() => res.status(500).send());
-      })
-      .catch(() => res.status(500).send());
-    })
+    }).then((user) => VerificationModel.createVerification({
+      userId : user._id,
+      provider : 'email',
+      token : generatedToken
+    }))
+    .then(() => sgMail.send({
+      to: req.body.email,
+      from: config.email.templates.EMAIL_VERIFICATION.from,
+      templateId: config.email.templates.EMAIL_VERIFICATION.templateId,
+      dynamic_template_data: {
+        username: req.body.username,
+        verify_link: `https://felfire.app/email-verify/${generatedToken}`
+      },
+    }))
+    .then(() => res.status(201).send())
     .catch(() => res.status(500).send());
   }
 };
@@ -114,39 +110,32 @@ exports.forgotPassword = (req, res) => {
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
   } else {
-    VerificationModel.findByUserIdAndProvider(req.body.userId, 'password', true).then((data) => {
-      if (!data[0] || data[0].created < (moment().subtract(5, 'minutes'))) {
-        let generatedToken = crypto.randomBytes(16).toString('hex');
-
-        sgMail.send({
-          to: req.body.email,
-          from: config.email.templates.FORGOT_PASSWORD.from,
-          subject: config.email.templates.FORGOT_PASSWORD.subject,
-          text: util.format(config.email.templates.FORGOT_PASSWORD.text, generatedToken),
-          html: util.format(config.email.templates.FORGOT_PASSWORD.html, generatedToken),
-        })
-        .then(() => {
-          if (!data[0]) {
-            VerificationModel.createVerification({
-              userId : req.body.userId,
-              provider : 'password',
-              token : generatedToken
-            })
-            .then(() => res.status(201).send({ sent : 1 }))
-            .catch(() => res.status(500).send());
-          } else {
-            data[0].token = generatedToken;
-            data[0].created = Date.now;
-            data[0].save(() => res.status(201).send({ sent : 1 }))
-              .catch(() => res.status(500).send());
-          }
-        })
-        .catch(() => res.status(500).send());
-      } else {
-        res.status(201).send({ sent : 0 });
-      }
-    })
-    .catch(() => res.status(500).send());
+    UserModel.findByEmail(req.body.email)
+      .then((users) => VerificationModel.findByUserIdAndProvider(users[0]._id, 'password').then((data) => {
+        if (data.length <= 0) {
+          let generatedToken = crypto.randomBytes(16).toString('hex');
+  
+          sgMail.send({
+            to: users[0].email,
+            from: config.email.templates.FORGOT_PASSWORD.from,
+            templateId: config.email.templates.FORGOT_PASSWORD.templateId,
+            dynamic_template_data: {
+              username: users[0].username,
+              reset_link: `https://felfire.app/password-reset/${generatedToken}`
+            },
+          })
+          .then(() => VerificationModel.createVerification({
+            userId : users[0]._id,
+            provider : 'password',
+            token : generatedToken
+          }))
+          .then(() => res.status(201).send({sent : 1}))
+          .catch(() => res.status(500).send());
+        } else {
+          res.status(201).send({sent : 0});
+        }
+      }))
+      .catch(() => res.status(500).send());
   }
 };
 
@@ -154,15 +143,19 @@ exports.verifyEmailToken = (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    res.status(422).json({ errors: errors.array() });
+    res.sendFile(path.join(__dirname + '/../views/email-verification-error.html'));
   } else {
-    VerificationModel.findByTokenAndProvider(req.params.token, 'email').then((tokens) => {
+    VerificationModel.findByTokenAndProvider(req.params.token, 'email', true).then((tokens) => {
       if (tokens[0]) {
-
+        tokens[0].used = true;
+        tokens[0].save()
+          .then(() => UserModel.verified(tokens[0].userId))
+          .then(() => res.sendFile(path.join(__dirname + '/../views/email-verification.html')))
+          .catch(() => res.sendFile(path.join(__dirname + '/../views/email-verification-error.html')));
       } else {
-        res.status(500).send();
+        res.sendFile(path.join(__dirname + '/../views/email-verification-error.html'))
       }
     })
-    .catch(() => res.status(500).send());
+    .catch(() => res.sendFile(path.join(__dirname + '/../views/email-verification-error.html')));
   }
 };

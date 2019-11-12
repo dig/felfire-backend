@@ -13,16 +13,12 @@
     "apiKey": "",
     "templates": {
       "EMAIL_VERIFICATION": {
-        "subject": "FelFire Account Verification",
-        "from": "verify@felfire.app",
-        "text": "test",
-        "html": "test"
+        "from": "",
+        "templateId": ""
       },
       "FORGOT_PASSWORD": {
-        "subject": "FelFire Password Reset",
-        "from": "reset@felfire.app",
-        "text": "test",
-        "html": "test"
+        "from": "",
+        "templateId": ""
       }
     }
   },

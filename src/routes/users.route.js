@@ -8,8 +8,11 @@ exports.routesConfig = function (app) {
   ]);
   app.post('/users/forgot/password', [
     UsersController.validate('forgotPassword'),
-    AuthValidationMiddleware.validJWTNeeded,
     UsersController.forgotPassword
+  ]);
+  app.get('/password-reset/:token', [
+    UsersController.validate('verifyEmailToken'),
+    UsersController.verifyEmailToken
   ]);
   app.get('/email-verify/:token', [
     UsersController.validate('verifyEmailToken'),
