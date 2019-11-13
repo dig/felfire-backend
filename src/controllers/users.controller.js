@@ -13,39 +13,39 @@ exports.validate = (method) => {
   switch (method) {
     case 'insert': {
       return [ 
-        body('username', 'Username doesn\'t exist')
+        body('username', 'Username doesn\'t exist.')
           .exists()
           .isString()
-          .isLength({ min: 2, max: 16 }).withMessage('Must be between 2 and 16 characters.')
+          .isLength({ min: 2, max: 16 }).withMessage('Username must be between 2 and 16 characters.')
           .custom(val => {
             return UserModel.findByUsername(val).then(users => {
               if (users.length > 0) return Promise.reject();
             });
           }).withMessage('Username already exists.'),
-        body('email', 'Email doesn\'t exist')
+        body('email', 'Email doesn\'t exist.')
           .exists()
           .isString()
-          .isEmail().withMessage('Invalid format.')
-          .isLength({ min: 5, max: 48 }).withMessage('Must be between 5 and 48 characters.')
+          .isEmail().withMessage('Invalid email format.')
+          .isLength({ min: 5, max: 48 }).withMessage('Email must be between 5 and 48 characters.')
           .custom(val => {
             return UserModel.findByEmail(val).then(users => {
               if (users.length > 0) return Promise.reject();
             });
           }).withMessage('Email already exists.'),
-        body('password', 'password doesn\'t exist')
+        body('password', 'Password doesn\'t exist.')
           .exists()
           .isString()
-          .isLength({ min: 5, max: 60 }).withMessage('Must be between 5 and 60 characters.')
+          .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.')
       ]   
     }
 
     case 'forgotPassword': {
       return [ 
-        body('email', 'Email doesn\'t exist')
+        body('email', 'Email doesn\'t exist.')
           .exists()
           .isString()
           .isEmail().withMessage('Invalid format.')
-          .isLength({ min: 5, max: 48 }).withMessage('Must be between 5 and 48 characters.')
+          .isLength({ min: 5, max: 48 }).withMessage('Email must be between 5 and 48 characters.')
           .custom(val => {
             return UserModel.findByEmail(val).then(users => {
               if (users.length <= 0) return Promise.reject();

@@ -9,21 +9,21 @@ exports.validate = (method) => {
   switch (method) {
     case 'login': {
       return [ 
-        body('email', 'email doesn\'t exist')
+        body('email', 'Email doesn\'t exist')
           .exists()
           .isString()
-          .isEmail().withMessage('invalid email format')
-          .isLength({ min: 5, max: 48 }).withMessage('email must be minimum 5 characters and maximum 48 characters'),
-        body('password', 'password doesn\'t exist')
+          .isEmail().withMessage('Invalid email format')
+          .isLength({ min: 5, max: 48 }).withMessage('Email must be minimum 5 characters and maximum 48 characters.'),
+        body('password', 'Password doesn\'t exist')
           .exists()
           .isString()
-          .isLength({ min: 4, max: 60 }).withMessage('password must be minimum 4 characters and maximum 60 characters')
+          .isLength({ min: 4, max: 60 }).withMessage('Password must be minimum 4 characters and maximum 60 characters.')
       ]   
     }
 
     case 'refresh': {
       return [ 
-        body('refreshToken', 'refresh token doesn\'t exist')
+        body('refreshToken', 'Refresh token doesn\'t exist')
           .exists()
           .isString()
       ]   
