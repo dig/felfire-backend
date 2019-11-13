@@ -44,7 +44,7 @@ exports.validate = (method) => {
         body('email', 'Email doesn\'t exist.')
           .exists()
           .isString()
-          .isEmail().withMessage('Invalid format.')
+          .isEmail().withMessage('Invalid email format.')
           .isLength({ min: 5, max: 48 }).withMessage('Email must be between 5 and 48 characters.')
           .custom(val => {
             return UserModel.findByEmail(val).then(users => {
