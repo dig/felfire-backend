@@ -10,10 +10,6 @@ exports.routesConfig = function (app) {
     UsersController.validate('forgotPassword'),
     UsersController.forgotPassword
   ]);
-  app.get('/password-reset/:token', [
-    UsersController.validate('verifyEmailToken'),
-    UsersController.verifyEmailToken
-  ]);
   app.get('/email-verify/:token', [
     UsersController.validate('verifyEmailToken'),
     UsersController.verifyEmailToken

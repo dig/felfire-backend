@@ -96,7 +96,7 @@ exports.insert = (req, res) => {
       templateId: config.email.templates.EMAIL_VERIFICATION.templateId,
       dynamic_template_data: {
         username: req.body.username,
-        verify_link: `https://felfire.app/email-verify/${generatedToken}`
+        verify_link: `https://api.felfire.app/email-verify/${generatedToken}`
       },
     }))
     .then(() => res.status(201).send())
@@ -121,7 +121,7 @@ exports.forgotPassword = (req, res) => {
             templateId: config.email.templates.FORGOT_PASSWORD.templateId,
             dynamic_template_data: {
               username: users[0].username,
-              reset_link: `https://felfire.app/password-reset/${generatedToken}`
+              reset_link: `https://api.felfire.app/password-reset/${generatedToken}`
             },
           })
           .then(() => VerificationModel.createVerification({
