@@ -57,7 +57,7 @@ var nuts = Nuts({
   token: config.git.token
 });
 
-app.use('/updater', nuts.router);
+app.use('/update', nuts.router);
 
 nuts.before('download', function(download, next) {
   console.log('user is downloading', download.platform.filename, "for version", download.version.tag, "on channel", download.version.channel, "for", download.platform.type);
