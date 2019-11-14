@@ -5,7 +5,6 @@ const fs = require('fs'),
     express = require('express'),
     bodyParser = require('body-parser'),
     multer = require('multer'),
-    Nuts = require('nuts-serve').Nuts,
     useragent = require('express-useragent'),
     sgMail = require('@sendgrid/mail'),
     config = require('../config/config.json');
@@ -50,21 +49,3 @@ const server = https.createServer(options, app).listen(config.port, function() {
   console.log('Felfire backend listening on port ' + config.port);
 });
 app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/views/index.html')));
-
-
-//--- Nuts routing
-var nuts = Nuts({
-  repository: config.git.repo,
-  token: config.git.token
-});
-
-app.use('/update', nuts.router);
-
-nuts.before('download', function(download, next) {
-  console.log('user is downloading', download.platform.filename, "for version", download.version.tag, "on channel", download.version.channel, "for", download.platform.type);
-  next();
-});
-nuts.after('download', function(download, next) {
-  console.log('user downloaded', download.platform.filename, "for version", download.version.tag, "on channel", download.version.channel, "for", download.platform.type);
-  next();
-});

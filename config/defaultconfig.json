@@ -22,10 +22,5 @@
       }
     }
   },
-  "git": {
-    "provider": "Nuts",
-    "repo": "",
-    "token": ""
-  },
   "debug": false
 }
