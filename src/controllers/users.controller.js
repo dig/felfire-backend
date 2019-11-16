@@ -85,7 +85,8 @@ exports.insert = (req, res) => {
       email : req.body.email,
       password : hash,
       salt : salt
-    }).then((user) => VerificationModel.createVerification({
+    })
+    .then((user) => VerificationModel.createVerification({
       userId : user._id,
       provider : 'email',
       token : generatedToken

@@ -41,7 +41,8 @@ exports.login = (req, res) => {
       try {
         //--- Access token
         let payload = {
-          userId : req.body.userId
+          userId : req.body.userId,
+          permissionLevel : req.body.permissionLevel
         };
         let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
   
@@ -82,7 +83,8 @@ exports.refresh_token = (req, res) => {
     try {
       //--- Access token
       let payload = {
-        userId : req.body.userId
+        userId : req.body.userId,
+        permissionLevel : req.body.permissionLevel
       };
       let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
 

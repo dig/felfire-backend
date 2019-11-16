@@ -18,7 +18,7 @@ const app = express();
 const upload = multer();
 sgMail.setApiKey(config.email.apiKey);
 
-app.use(upload.array()); // multipart/form-data
+// app.use(upload.array()); // multipart/form-data
 app.use(bodyParser.json()); // application/json
 app.use(bodyParser.urlencoded({ extended: true })); // application/xwww-
 
@@ -40,12 +40,22 @@ app.use(function (req, res, next) {
 });
 
 const AuthorizationRouter = require('./routes/authorization.route');
+const ImagesRouter = require('./routes/images.route');
 const UsersRouter = require('./routes/users.route');
 
 AuthorizationRouter.routesConfig(app);
+ImagesRouter.routesConfig(app);
 UsersRouter.routesConfig(app);
 
-const server = https.createServer(options, app).listen(config.port, function() {
-  console.log('Felfire backend listening on port ' + config.port);
-});
-app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/views/index.html')));
+function runAPIEndpoint() {
+  const server = https.createServer(options, app).listen(config.port, function() {
+    console.log('Felfire backend listening on port ' + config.port);
+  });
+  app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/views/index.html')));
+}
+
+//--- Upsert node into mongo
+const NodeModel = require('./models/nodes.model');
+NodeModel.createNodeOrUpdate(config.node.name, config.node.host)
+  .then(() => runAPIEndpoint())
+  .catch((error) => console.log(error));

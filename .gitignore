@@ -8,3 +8,5 @@ config.json
 cert.pem
 cert.key
 test/
+storage
+upload

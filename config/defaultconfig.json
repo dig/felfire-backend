@@ -1,5 +1,9 @@
 {
-  "port": 443,
+  "port": 3235,
+  "node": {
+    "name": "",
+    "host": ""
+  },
   "database": {
     "host": "",
     "username": "",
