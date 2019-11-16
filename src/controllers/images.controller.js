@@ -29,9 +29,9 @@ exports.image = (req, res) => {
     ImageModel.findOneByIdAndUserId(req.params.imageId, req.jwt.userId).then((image) => {
       if (image) {
         res.status(200).send({
-          id : image._id,
-          url : `https://felfire.app/${image._id}`,
-          direct_url : `https://cdn.felfire.app/${image._id}.${image.type}`,
+          id : image.hash,
+          url : `https://felfire.app/${image.hash}`,
+          cdn_url : `https://cdn.felfire.app/${image.hash}`,
           type : image.type,
           created : image.created
         });
@@ -50,7 +50,7 @@ exports.imageNode = (req, res) => {
     res.status(422).json({ errors: errors.array() });
   } else {
     if (req.jwt.lookupImage) {
-      ImageModel.findOneById(req.params.imageId).then((image) => {
+      ImageModel.findOneByHash(req.params.imageId).then((image) => {
         if (image) {
           NodeModel.findOneByName(image.node).then((node) => {
             if (node) {
@@ -60,7 +60,7 @@ exports.imageNode = (req, res) => {
                   host : node.host
                 },
                 image : {
-                  id : image._id,
+                  id : image.hash,
                   type : image.type
                 },
                 path : image.nodePath
@@ -85,24 +85,29 @@ exports.upload = (req, res) => {
   let date = moment();
 
   let fileType = req.file.mimetype.substring(6);
-  let path = `${date.format('YYYY')}/${date.format('M')}/${date.format('d')}`;
+  let path = `${date.format('YYYY')}/${date.format('M')}/${date.format('D')}`;
 
   let moveFrom = `${req.file.destination}/${req.file.filename}`;
   let moveTo = (process.platform === "win32" ? `./storage/${path}` : `/home/storage/${path}`);
 
   imageToBase64(moveFrom).then((base64) => {
-    let hash = crypto.createHash('md5').update(base64 + req.body.userId + Date.now).digest('hex');
+    let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${date.valueOf()}`).digest('hex');
 
     fs.move(moveFrom, `${moveTo}/${hash}.${fileType}`)
       .then(() => ImageModel.createImage({
         hash : hash,
         type : fileType,
         name : req.file.filename,
-        userId : mongoose.Types.ObjectId(req.body.userId),
+        userId : mongoose.Types.ObjectId(req.jwt.userId),
         node : config.node.name,
         nodePath : path
       }))
-      .then(() => res.status(201).send())
+      .then(() => res.status(201).send({
+        id : hash,
+        url : `https://felfire.app/${hash}`,
+        cdn_url : `https://cdn.felfire.app/${hash}`,
+        type : fileType
+      }))
       .catch((err) => res.status(500).send());
   });
 };

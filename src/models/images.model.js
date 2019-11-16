@@ -2,7 +2,7 @@ const mongoose = require('../common/services/mongoose.service').mongoose;
 const Schema = mongoose.Schema;
 
 const imageSchema = new Schema({
-  hash : { type: String, required: true, index: true },
+  hash : { type: String, required: true, unique: true, index: true },
   type: { type: String, required: true },
   userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
   node: { type: String, required: true },
@@ -21,12 +21,20 @@ exports.findById = (imageId) => {
   return Image.find({_id: imageId});
 };
 
+exports.findByHash = (hash) => {
+  return Image.find({hash: hash});
+};
+
 exports.findByUserId = (userId) => {
   return Image.find({userId: userId});
 };
 
 exports.findOneById = (imageId) => {
   return Image.findById(imageId);
+};
+
+exports.findOneByHash = (hash) => {
+  return Image.findOne({hash: hash});
 };
 
 exports.findOneByIdAndUserId = (imageId, userId) => {
