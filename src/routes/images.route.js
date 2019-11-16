@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
     callback(null, (process.platform === "win32" ? './upload' : '/tmp/upload'));
   },
   filename: function (req, file, callback) {
-    callback(null, crypto.randomBytes(16).toString('hex'));
+    callback(null, `${crypto.randomBytes(16).toString('hex')}.${file.mimetype.substring(6)}`);
   }
 });
 const upload = multer({ 

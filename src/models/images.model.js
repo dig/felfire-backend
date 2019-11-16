@@ -2,6 +2,7 @@ const mongoose = require('../common/services/mongoose.service').mongoose;
 const Schema = mongoose.Schema;
 
 const imageSchema = new Schema({
+  hash : { type: String, required: true, index: true },
   type: { type: String, required: true },
   userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
   node: { type: String, required: true },

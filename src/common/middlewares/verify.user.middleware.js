@@ -26,5 +26,3 @@ exports.isPasswordAndUserMatch = (req, res, next) => {
     }
   });
 };
-
-console.log(crypto.createHmac('sha512', 'dV8QXz708mund3Yzcq0HlA==').update('Lolface101#').digest('base64'));

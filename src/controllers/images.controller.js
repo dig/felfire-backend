@@ -1,7 +1,10 @@
 const { body, param, validationResult } = require('express-validator'),
       config = require('../../config/config.json'),
-      fs = require('fs-extra')
-      moment = require('moment');
+      fs = require('fs-extra'),
+      moment = require('moment'),
+      mongoose = require('mongoose'),
+      crypto = require('crypto'),
+      imageToBase64 = require('image-to-base64');
 
 const ImageModel = require('../models/images.model');
 const NodeModel = require('../models/nodes.model');
@@ -80,16 +83,26 @@ exports.imageNode = (req, res) => {
 
 exports.upload = (req, res) => {
   let date = moment();
+
+  let fileType = req.file.mimetype.substring(6);
   let path = `${date.format('YYYY')}/${date.format('M')}/${date.format('d')}`;
 
-  fs.move(`${req.file.destination}/${req.file.filename}`, (process.platform === "win32" ? `./storage/${path}` : `/home/storage/${path}`))
-    .then(ImageModel.createImage({
-      type : req.file.mimetype.substring(6),
-      name : req.file.filename,
-      userId : req.body.userId,
-      node : config.node.name,
-      nodePath : path
-    }))
-    .then(() => res.status(201).send())
-    .catch(() => res.status(500).send());
+  let moveFrom = `${req.file.destination}/${req.file.filename}`;
+  let moveTo = (process.platform === "win32" ? `./storage/${path}` : `/home/storage/${path}`);
+
+  imageToBase64(moveFrom).then((base64) => {
+    let hash = crypto.createHash('md5').update(base64 + req.body.userId + Date.now).digest('hex');
+
+    fs.move(moveFrom, `${moveTo}/${hash}.${fileType}`)
+      .then(() => ImageModel.createImage({
+        hash : hash,
+        type : fileType,
+        name : req.file.filename,
+        userId : mongoose.Types.ObjectId(req.body.userId),
+        node : config.node.name,
+        nodePath : path
+      }))
+      .then(() => res.status(201).send())
+      .catch((err) => res.status(500).send());
+  });
 };
