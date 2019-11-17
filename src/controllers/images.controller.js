@@ -43,6 +43,32 @@ exports.image = (req, res) => {
   };
 };
 
+exports.images = (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    res.status(422).json({ errors: errors.array() });
+  } else {
+    ImageModel.findByUserId(req.jwt.userId).then((images) => {
+      let data = [];
+
+      for (let i = 0; i < images.length; i++) {
+        let image = images[i];
+        data.push({
+          id : image.hash,
+          url : `https://felfire.app/${image.hash}`,
+          cdn_url : `https://cdn.felfire.app/${image.hash}`,
+          type : image.type,
+          created : image.created
+        });
+      }
+      
+      res.status(200).send(data);
+    })
+    .catch(() => res.status(500).send());
+  };
+};
+
 exports.imageNode = (req, res) => {
   const errors = validationResult(req);
 

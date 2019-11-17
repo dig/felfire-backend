@@ -26,5 +26,9 @@
       }
     }
   },
+  "recaptcha": {
+    "siteKey": "",
+    "secretKey": ""
+  },
   "debug": false
 }

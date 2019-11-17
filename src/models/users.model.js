@@ -9,6 +9,11 @@ const userSchema = new Schema({
   permissionLevel: { type: Number, default: 1 },
   verified: { type: Boolean, default: false },
   created: { type: Date, default: Date.now }
+}, {
+  collation: {
+    locale: 'en',
+    strength: 2
+  }
 });
 
 const User = mongoose.model('Users', userSchema);

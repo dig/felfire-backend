@@ -1,12 +1,14 @@
 const crypto = require('crypto'),
     path = require('path'),
     sgMail = require('@sendgrid/mail'),
+    recaptcha = require("recaptcha-promise"),
     { body, param, validationResult } = require('express-validator'),
     config = require('../../config/config.json');
 
 const UserModel = require('../models/users.model'),
     VerificationModel = require('../models/verifications.model');
 
+recaptcha.init({secret_key: config.recaptcha.secretKey});
 sgMail.setApiKey(config.email.apiKey);
 
 exports.validate = (method) => {
@@ -35,7 +37,15 @@ exports.validate = (method) => {
         body('password', 'Password doesn\'t exist.')
           .exists()
           .isString()
-          .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.')
+          .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.'),
+        body('g-recaptcha-response', 'Captcha doesn\'t exist.')
+          .exists()
+          .isString()
+          .custom(val => {
+            return recaptcha(val).then((success) => {
+              if (!success) return Promise.reject();
+            });
+          }).withMessage('Invalid captcha response.')
       ]   
     }
 
@@ -50,7 +60,15 @@ exports.validate = (method) => {
             return UserModel.findByEmail(val).then(users => {
               if (users.length <= 0) return Promise.reject();
             });
-          }).withMessage('Email doesn\'t exist.')
+          }).withMessage('Email doesn\'t exist.'),
+        body('g-recaptcha-response', 'Captcha doesn\'t exist.')
+          .exists()
+          .isString()
+          .custom(val => {
+            return recaptcha(val).then((success) => {
+              if (!success) return Promise.reject();
+            });
+          }).withMessage('Invalid captcha response.')
       ]  
     }
 
