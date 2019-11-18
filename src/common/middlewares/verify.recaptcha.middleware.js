@@ -1,11 +1,17 @@
-const { v3 } = require('recaptcha3');
+const AES = require('../utils/AES.utils'),
+    moment = require('moment');
 
 exports.validRecaptcha = (req, res, next) => {
-  v3(req).then((data) => {
-    if (data.success && data.score >= 0.5) {
-      next();
-    } else {
-      res.status(400).send({error: 'Invalid recaptcha token or too low score.'});
+  if (req.body.token) {
+    try {
+      let payload = JSON.parse(AES.decrypt(req.body.token));
+      if (payload.a >= 800 && (moment().subtract(15, 'minutes').isBefore(moment(payload.bb))) && payload.ccc && payload.dddd) {
+        return next();
+      }
+    } catch (e) {
+      return res.status(500).send({error: 'Invalid captcha response, please try again.'});
     }
-  });
+  }
+
+  return res.status(400).send({error: 'Invalid captcha response, please try again.'});
 };
