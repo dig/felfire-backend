@@ -17,6 +17,19 @@ exports.validate = (method) => {
           .exists()
       ]
     }
+
+    case 'images': {
+      return [ 
+        body('page', 'Page doesn\'t exist.')
+          .exists()
+          .isNumeric().withMessage('Page is not a number.')
+          .isInt({ min: 1 }).withMessage('Page must be 1 or higher.'),
+        body('count', 'Count doesn\'t exist.')
+          .exists()
+          .isNumeric().withMessage('Count is not a number.')
+          .isInt({ min: 1, max: 100 }).withMessage('Count must be between 1 and 100.'),
+      ]   
+    }
   }
 };
 
@@ -32,6 +45,7 @@ exports.image = (req, res) => {
           id : image.hash,
           url : `https://felfire.app/${image.hash}`,
           cdn_url : `https://cdn.felfire.app/${image.hash}`,
+          thumb_url : `https://thumb.felfire.app/${image.hash}`,
           type : image.type,
           created : image.created
         });
@@ -49,23 +63,32 @@ exports.images = (req, res) => {
   if (!errors.isEmpty()) {
     res.status(422).json({ errors: errors.array() });
   } else {
-    ImageModel.findByUserId(req.jwt.userId).then((images) => {
-      let data = [];
+    let skip = req.body.count * (req.body.page - 1);
+    let limit = parseInt(req.body.count);
 
-      for (let i = 0; i < images.length; i++) {
-        let image = images[i];
-        data.push({
-          id : image.hash,
-          url : `https://felfire.app/${image.hash}`,
-          cdn_url : `https://cdn.felfire.app/${image.hash}`,
-          type : image.type,
-          created : image.created
-        });
-      }
-      
-      res.status(200).send(data);
-    })
-    .catch(() => res.status(500).send());
+    ImageModel.findByUserId(req.jwt.userId)
+      .sort({created: -1})
+      .skip(skip)
+      .limit(limit)
+      .then((images) => {
+        let data = [];
+
+        for (let i = 0; i < images.length; i++) {
+          let image = images[i];
+
+          data.push({
+            id : image.hash,
+            url : `https://felfire.app/${image.hash}`,
+            cdn_url : `https://cdn.felfire.app/${image.hash}`,
+            thumb_url : `https://thumb.felfire.app/${image.hash}`,
+            type : image.type,
+            created : image.created
+          });
+        }
+        
+        res.status(200).send(data);
+      })
+      .catch(() => res.status(500).send());
   };
 };
 

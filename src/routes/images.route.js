@@ -39,6 +39,7 @@ exports.routesConfig = function (app) {
     ImagesController.image
   ]);
   app.get('/images', [
+    ImagesController.validate('images'),
     AuthValidationMiddleware.validJWTNeeded,
     ImagesController.images
   ]);
