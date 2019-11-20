@@ -97,8 +97,8 @@ exports.refresh_token = (req, res) => {
       let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
 
       res.status(201).send({
-        username: username,
-        email: email,
+        username: req.body.username,
+        email: req.body.email,
         accessToken: token
       });
     } catch (err) {
