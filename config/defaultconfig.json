@@ -30,5 +30,10 @@
     "siteKey": "",
     "secretKey": ""
   },
+  "thumbnail": {
+    "percentage": 10,
+    "width": 120,
+    "height": 120
+  },
   "debug": false
 }

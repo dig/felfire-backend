@@ -4,7 +4,10 @@ const { body, param, validationResult } = require('express-validator'),
       moment = require('moment'),
       mongoose = require('mongoose'),
       crypto = require('crypto'),
-      imageToBase64 = require('image-to-base64');
+      imageToBase64 = require('image-to-base64'),
+      { promisify } = require('util'),
+      imageSizeOf = promisify(require('image-size')),
+      gm = require('gm');
 
 const ImageModel = require('../models/images.model');
 const NodeModel = require('../models/nodes.model');
@@ -41,14 +44,18 @@ exports.image = (req, res) => {
   } else {
     ImageModel.findOneByIdAndUserId(req.params.imageId, req.jwt.userId).then((image) => {
       if (image) {
-        res.status(200).send({
+        let response = {
           id : image.hash,
           url : `https://felfire.app/${image.hash}`,
           cdn_url : `https://cdn.felfire.app/${image.hash}`,
-          thumb_url : `https://thumb.felfire.app/${image.hash}`,
           type : image.type,
           created : image.created
-        });
+        };
+
+        if (image.thumbnail)
+          response.thumb_url = `https://thumb.felfire.app/${image.hash}`;
+
+        res.status(200).send(response);
       } else {
         res.status(404).send();
       }
@@ -75,15 +82,18 @@ exports.images = (req, res) => {
 
         for (let i = 0; i < images.length; i++) {
           let image = images[i];
-
-          data.push({
+          let response = {
             id : image.hash,
             url : `https://felfire.app/${image.hash}`,
             cdn_url : `https://cdn.felfire.app/${image.hash}`,
-            thumb_url : `https://thumb.felfire.app/${image.hash}`,
             type : image.type,
             created : image.created
-          });
+          };
+
+          if (image.thumbnail)
+            response.thumb_url = `https://thumb.felfire.app/${image.hash}`;
+
+          data.push(response);
         }
         
         res.status(200).send(data);
@@ -140,23 +150,42 @@ exports.upload = (req, res) => {
   let moveTo = (process.platform === "win32" ? `./storage/${path}` : `/home/storage/${path}`);
 
   imageToBase64(moveFrom).then((base64) => {
-    let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${date.valueOf()}`).digest('hex');
+    imageSizeOf(moveFrom).then(dimensions => {
+      let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${date.valueOf()}`).digest('hex');
+      let shouldGenerateThumbnail = dimensions.width > config.thumbnail.width || dimensions.height > config.thumbnail.height;
 
-    fs.move(moveFrom, `${moveTo}/${hash}.${fileType}`)
-      .then(() => ImageModel.createImage({
-        hash : hash,
-        type : fileType,
-        name : req.file.filename,
-        userId : mongoose.Types.ObjectId(req.jwt.userId),
-        node : config.node.name,
-        nodePath : path
-      }))
-      .then(() => res.status(201).send({
-        id : hash,
-        url : `https://felfire.app/${hash}`,
-        cdn_url : `https://cdn.felfire.app/${hash}`,
-        type : fileType
-      }))
-      .catch((err) => res.status(500).send());
+      fs.move(moveFrom, `${moveTo}/${hash}.${fileType}`)
+        .then(() => fs.ensureDir(`${moveTo}/thumbnail`))
+        .then(() => (shouldGenerateThumbnail ? 
+          new Promise((resolve, reject) => {
+              gm(`${moveTo}/${hash}.${fileType}`)
+                .resize(config.thumbnail.width, config.thumbnail.height, '^')
+                .gravity('Center')
+                .crop(config.thumbnail.width, config.thumbnail.height)
+                .quality(90)
+                .write(`${moveTo}/thumbnail/${hash}.jpg`, function (err) {
+                  if (err) reject(err);
+                  resolve();
+                })
+          })
+         : null))
+        .then(() => ImageModel.createImage({
+          hash : hash,
+          type : fileType,
+          size : req.file.size,
+          thumbnail : shouldGenerateThumbnail,
+          name : req.file.filename,
+          userId : mongoose.Types.ObjectId(req.jwt.userId),
+          node : config.node.name,
+          nodePath : path
+        }))
+        .then(() => res.status(201).send({
+          id : hash,
+          url : `https://felfire.app/${hash}`,
+          cdn_url : `https://cdn.felfire.app/${hash}`,
+          type : fileType
+        }))
+        .catch((err) => res.status(500).send());
+    });
   });
 };

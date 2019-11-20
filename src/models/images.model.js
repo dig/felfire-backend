@@ -4,6 +4,8 @@ const Schema = mongoose.Schema;
 const imageSchema = new Schema({
   hash : { type: String, required: true, unique: true, index: true },
   type: { type: String, required: true },
+  size: { type: Number, required: true },
+  thumbnail: { type: Boolean, default: false },
   userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
   node: { type: String, required: true },
   nodePath: { type: String, required: true }, 
