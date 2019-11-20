@@ -42,6 +42,8 @@ exports.login = (req, res) => {
         //--- Access token
         let payload = {
           userId : req.body.userId,
+          username : req.body.username,
+          email : req.body.email,
           permissionLevel : req.body.permissionLevel
         };
         let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
@@ -62,7 +64,11 @@ exports.login = (req, res) => {
             },
             createdBy :  req.header('x-forwarded-for') || req.connection.remoteAddress
           }).then((result) => {
-            res.status(201).send({accessToken: token, refreshToken: refreshToken});
+            res.status(201).send({
+              username: req.body.username,
+              accessToken: token, 
+              refreshToken: refreshToken
+            });
           });
         });
       } catch (err) {
@@ -84,11 +90,17 @@ exports.refresh_token = (req, res) => {
       //--- Access token
       let payload = {
         userId : req.body.userId,
+        username : req.body.username,
+        email : req.body.email,
         permissionLevel : req.body.permissionLevel
       };
       let token = jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
 
-      res.status(201).send({accessToken: token});
+      res.status(201).send({
+        username: username,
+        email: email,
+        accessToken: token
+      });
     } catch (err) {
       res.status(500).send({errors: err});
     }
