@@ -162,7 +162,7 @@ exports.upload = (req, res) => {
                 .resize(config.thumbnail.width, config.thumbnail.height, '^')
                 .gravity('Center')
                 .crop(config.thumbnail.width, config.thumbnail.height)
-                .quality(90)
+                .quality(config.thumbnail.quality)
                 .write(`${moveTo}/thumbnail/${hash}.jpg`, function (err) {
                   if (err) reject(err);
                   resolve();
