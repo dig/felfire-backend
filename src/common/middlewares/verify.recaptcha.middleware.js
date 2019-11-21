@@ -9,7 +9,7 @@ exports.validRecaptcha = (req, res, next) => {
         return next();
       }
     } catch (e) {
-      return res.status(500).send({error: 'Invalid captcha response, please try again.'});
+      return res.status(400).send({error: 'Invalid captcha response, please try again.'});
     }
   }
 

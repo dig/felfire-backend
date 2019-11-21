@@ -6,7 +6,8 @@ const crypto = require('crypto'),
     config = require('../../config/config.json');
 
 const UserModel = require('../models/users.model'),
-    VerificationModel = require('../models/verifications.model');
+    VerificationModel = require('../models/verifications.model'),
+    CodeModel = require('../models/codes.model');
 
 sgMail.setApiKey(config.email.apiKey);
 
@@ -39,7 +40,15 @@ exports.validate = (method) => {
           .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.'),
         body('token', 'Captcha doesn\'t exist.')
           .exists()
+          .isString(),
+        body('code', 'Code doesn\'t exist.')
+          .exists()
           .isString()
+          .custom(val => {
+            return CodeModel.findByTypeAndCode('alpha', val).then(code => {
+              if (!code) return Promise.reject();
+            });
+          }).withMessage('Code is invalid.'),
       ]   
     }
 
@@ -98,6 +107,7 @@ exports.insert = (req, res) => {
       provider : 'email',
       token : generatedToken
     }))
+    .then(() => CodeModel.used(req.body.code))
     .then(() => sgMail.send({
       to: req.body.email,
       from: config.email.templates.EMAIL_VERIFICATION.from,
@@ -108,7 +118,7 @@ exports.insert = (req, res) => {
       },
     }))
     .then(() => res.status(201).send())
-    .catch(() => res.status(500).send());
+    .catch((error) => res.status(500).send());
   }
 };
 
