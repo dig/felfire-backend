@@ -50,13 +50,13 @@ exports.image = (req, res) => {
         let response = {
           id : image.hash,
           url : `https://felfire.app/${image.hash}`,
-          cdn_url : `https://cdn.felfire.app/${image.hash}`,
+          cdn_url : `https://cdn.felfire.app/${image.hash}.${image.type}`,
           type : image.type,
           created : image.created
         };
 
         if (image.thumbnail)
-          response.thumb_url = `https://thumb.felfire.app/${image.hash}`;
+          response.thumb_url = `https://thumb.felfire.app/${image.hash}.jpg`;
 
         res.status(200).send(response);
       } else {
@@ -88,13 +88,13 @@ exports.images = (req, res) => {
           let response = {
             id : image.hash,
             url : `https://felfire.app/${image.hash}`,
-            cdn_url : `https://cdn.felfire.app/${image.hash}`,
+            cdn_url : `https://cdn.felfire.app/${image.hash}.${image.type}`,
             type : image.type,
             created : image.created
           };
 
           if (image.thumbnail)
-            response.thumb_url = `https://thumb.felfire.app/${image.hash}`;
+            response.thumb_url = `https://thumb.felfire.app/${image.hash}.jpg`;
 
           data.push(response);
         }
@@ -151,7 +151,7 @@ exports.upload = async (req, res) => {
     res.status(201).send({
       id : hash,
       url : `https://felfire.app/${hash}`,
-      cdn_url : `https://cdn.felfire.app/${hash}`,
+      cdn_url : `https://cdn.felfire.app/${hash}.${fileType}`,
       type : fileType
     });
   } catch (error) {
