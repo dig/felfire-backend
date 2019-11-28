@@ -105,44 +105,6 @@ exports.images = (req, res) => {
   };
 };
 
-exports.imageNode = (req, res) => {
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    res.status(422).json({ errors: errors.array() });
-  } else {
-    if (req.jwt.lookupImage) {
-      ImageModel.findOneByHash(req.params.imageId).then((image) => {
-        if (image) {
-          NodeModel.findOneByName(image.node).then((node) => {
-            if (node) {
-              res.status(200).send({
-                node : {
-                  name : image.node,
-                  host : node.host
-                },
-                image : {
-                  id : image.hash,
-                  type : image.type
-                },
-                path : image.nodePath
-              });
-            } else {
-              res.status(404).send();
-            }
-          })
-          .catch(() => res.status(500).send());
-        } else {
-          res.status(404).send();
-        }
-      })
-      .catch(() => res.status(500).send());
-    } else {
-      res.status(401).send();
-    }
-  };
-};
-
 exports.upload = async (req, res) => {
   let fileType = req.file.mimetype.substring(6);
   let filePath = `${req.file.destination}/${req.file.filename}`;

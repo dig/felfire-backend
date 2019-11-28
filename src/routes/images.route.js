@@ -43,9 +43,4 @@ exports.routesConfig = function (app) {
     AuthValidationMiddleware.validJWTNeeded,
     ImagesController.images
   ]);
-  app.get('/images/:imageId/node', [
-    ImagesController.validate('image'),
-    AuthValidationMiddleware.validJWTNeeded,
-    ImagesController.imageNode
-  ]);
 };
