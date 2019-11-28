@@ -8,7 +8,6 @@ const imageSchema = new Schema({
   thumbnail: { type: Boolean, default: false },
   userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
   node: { type: String, required: true },
-  nodePath: { type: String, required: true }, 
   created: { type: Date, default: Date.now }
 });
 

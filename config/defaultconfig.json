@@ -26,9 +26,13 @@
       }
     }
   },
-  "recaptcha": {
-    "siteKey": "",
-    "secretKey": ""
+  "openstack": {
+    "auth": "https://auth.cloud.ovh.net/v2.0",
+    "id": "",
+    "password": "",
+    "tenantId": "",
+    "tenantName": "",
+    "region": ""
   },
   "thumbnail": {
     "quality": 90,

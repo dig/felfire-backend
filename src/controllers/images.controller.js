@@ -4,13 +4,16 @@ const { body, param, validationResult } = require('express-validator'),
       moment = require('moment'),
       mongoose = require('mongoose'),
       crypto = require('crypto'),
-      imageToBase64 = require('image-to-base64'),
       { promisify } = require('util'),
+      imageToBase64 = require('image-to-base64'),
       imageSizeOf = promisify(require('image-size')),
       gm = require('gm');
 
-const ImageModel = require('../models/images.model');
-const NodeModel = require('../models/nodes.model');
+const storage = require('../common/services/storage.service'),
+      { CONTAINER } = require('../common/constants/storage.constants');
+
+const ImageModel = require('../models/images.model'),
+      NodeModel = require('../models/nodes.model');
 
 exports.validate = (method) => {
   switch (method) {
@@ -140,52 +143,59 @@ exports.imageNode = (req, res) => {
   };
 };
 
-exports.upload = (req, res) => {
-  let date = moment();
-
+exports.upload = async (req, res) => {
   let fileType = req.file.mimetype.substring(6);
-  let path = `${date.format('YYYY')}/${date.format('M')}/${date.format('D')}`;
+  let filePath = `${req.file.destination}/${req.file.filename}`;
 
-  let moveFrom = `${req.file.destination}/${req.file.filename}`;
-  let moveTo = (process.platform === "win32" ? `./storage/${path}` : `/home/storage/${path}`);
+  try {
+    let base64 = await imageToBase64(filePath);
+    let dimensions = await imageSizeOf(filePath);
+    
+    let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${moment().valueOf()}`).digest('hex');
+    let thumbnail = dimensions.width > config.thumbnail.width || dimensions.height > config.thumbnail.height;
 
-  imageToBase64(moveFrom).then((base64) => {
-    imageSizeOf(moveFrom).then(dimensions => {
-      let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${date.valueOf()}`).digest('hex');
-      let shouldGenerateThumbnail = dimensions.width > config.thumbnail.width || dimensions.height > config.thumbnail.height;
+    if (thumbnail) {
+      let thumbnailPath = `${req.file.destination}/${hash}-thumbnail.jpg`;
 
-      fs.move(moveFrom, `${moveTo}/${hash}.${fileType}`)
-        .then(() => fs.ensureDir(`${moveTo}/thumbnail`))
-        .then(() => (shouldGenerateThumbnail ? 
-          new Promise((resolve, reject) => {
-              gm(`${moveTo}/${hash}.${fileType}`)
-                .resize(config.thumbnail.width, config.thumbnail.height, '^')
-                .gravity('Center')
-                .crop(config.thumbnail.width, config.thumbnail.height)
-                .quality(config.thumbnail.quality)
-                .write(`${moveTo}/thumbnail/${hash}.jpg`, function (err) {
-                  if (err) reject(err);
-                  resolve();
-                })
-          })
-         : null))
-        .then(() => ImageModel.createImage({
-          hash : hash,
-          type : fileType,
-          size : req.file.size,
-          thumbnail : shouldGenerateThumbnail,
-          name : req.file.filename,
-          userId : mongoose.Types.ObjectId(req.jwt.userId),
-          node : config.node.name,
-          nodePath : path
-        }))
-        .then(() => res.status(201).send({
-          id : hash,
-          url : `https://felfire.app/${hash}`,
-          cdn_url : `https://cdn.felfire.app/${hash}`,
-          type : fileType
-        }))
-        .catch((err) => res.status(500).send());
+      await new Promise((resolve, reject) => {
+        gm(filePath)
+          .resize(config.thumbnail.width, config.thumbnail.height, '^')
+          .gravity('Center')
+          .crop(config.thumbnail.width, config.thumbnail.height)
+          .quality(config.thumbnail.quality)
+          .write(thumbnailPath, function (err) {
+            if (err) reject(err);
+            resolve();
+          });
+      });
+
+      await storage.put(thumbnailPath, CONTAINER.THUMBNAIL, `${hash}.jpg`);
+      await fs.remove(thumbnailPath);
+    }
+
+    await storage.put(filePath, CONTAINER.MAIN, `${hash}.${fileType}`);
+    await fs.remove(filePath);
+
+    await ImageModel.createImage({
+      hash : hash,
+      type : fileType,
+      size : req.file.size,
+      thumbnail : thumbnail,
+      name : req.file.filename,
+      userId : mongoose.Types.ObjectId(req.jwt.userId),
+      node : config.node.name
     });
-  });
+
+    res.status(201).send({
+      id : hash,
+      url : `https://felfire.app/${hash}`,
+      cdn_url : `https://cdn.felfire.app/${hash}`,
+      type : fileType
+    });
+  } catch (error) {
+    console.error(error);
+
+    fs.remove(filePath);
+    res.status(500).send();
+  }
 };

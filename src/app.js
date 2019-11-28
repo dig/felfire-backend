@@ -19,7 +19,6 @@ const upload = multer();
 
 //--- Environment variables
 sgMail.setApiKey(config.email.apiKey);
-process.env.RECAPTCHA_V3_PRIVATE = config.recaptcha.secretKey;
 
 // app.use(upload.array()); // multipart/form-data
 app.use(bodyParser.json()); // application/json
