@@ -1,20 +1,28 @@
-const OVHStorage = require('node-ovh-objectstorage'),
-      config = require('../../../config/config.json');
+const pkgcloud = require('pkgcloud'),
+      config = require('../../../config/config.json'),
+      fs = require('fs');
 
-const storage = new OVHStorage({
+const openstack = pkgcloud.storage.createClient({
+  provider: 'openstack',
   username: config.openstack.id,
   password: config.openstack.password,
-  authURL: config.openstack.auth,
+  authUrl: config.openstack.auth,
   tenantId: config.openstack.tenantId,
   region: config.openstack.region
 });
 
-storage.connection(() => console.log('Connected to OVH OpenStack API'), (err) => console.error(err));
-
 exports.put = (localPath, container, containerPath) => {
   return new Promise((resolve, reject) => {
-    storage.object().set(localPath, `/${container}/${containerPath}`, (data) => resolve(data), (error) => reject(error));
+    var readStream = fs.createReadStream(localPath);
+    var writeStream = openstack.upload({
+      container: container,
+      remote: containerPath
+    })
+    .on('error', (err) => reject(err))
+    .on('success', (file) => resolve(file));
+
+    readStream.pipe(writeStream);
   });
 };
 
-exports.storage = storage;
+exports.storage = openstack;

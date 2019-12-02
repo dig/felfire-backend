@@ -27,7 +27,7 @@
     }
   },
   "openstack": {
-    "auth": "https://auth.cloud.ovh.net/v2.0",
+    "auth": "https://auth.cloud.ovh.net",
     "id": "",
     "password": "",
     "tenantId": "",
