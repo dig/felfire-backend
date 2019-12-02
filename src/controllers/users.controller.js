@@ -1,7 +1,6 @@
 const crypto = require('crypto'),
     path = require('path'),
     sgMail = require('@sendgrid/mail'),
-    { v3 } = require('recaptcha3'),
     { body, param, validationResult } = require('express-validator'),
     config = require('../../config/config.json');
 
