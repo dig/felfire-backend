@@ -110,11 +110,18 @@ exports.upload = async (req, res) => {
   let filePath = `${req.file.destination}/${req.file.filename}`;
 
   try {
-    let base64 = await imageToBase64(filePath);
-    let dimensions = await imageSizeOf(filePath);
+    let base64;
+    let dimensions;
+
+    if (req.file.mimetype === 'video/mp4') {
+      base64 = await new Promise((resolve, reject) => fs.readFile(filePath, () => resolve()), { encoding: 'base64' });
+    } else {
+      base64 = await imageToBase64(filePath);
+      dimensions = await imageSizeOf(filePath);
+    }
     
     let hash = crypto.createHash('md5').update(`${base64}${req.jwt.userId}${moment().valueOf()}`).digest('hex');
-    let thumbnail = dimensions.width > config.thumbnail.width || dimensions.height > config.thumbnail.height;
+    let thumbnail = fileType === 'png' && (dimensions.width > config.thumbnail.width || dimensions.height > config.thumbnail.height);
 
     if (thumbnail) {
       let thumbnailPath = `${req.file.destination}/${hash}-thumbnail.jpg`;
