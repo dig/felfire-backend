@@ -12,8 +12,7 @@ const { body, param, validationResult } = require('express-validator'),
 const storage = require('../common/services/storage.service'),
       { CONTAINER } = require('../common/constants/storage.constants');
 
-const ImageModel = require('../models/images.model'),
-      NodeModel = require('../models/nodes.model');
+const ImageModel = require('../models/images.model');
 
 exports.validate = (method) => {
   switch (method) {
@@ -112,9 +111,12 @@ exports.upload = async (req, res) => {
   try {
     let base64;
     let dimensions;
-
+    
     if (req.file.mimetype === 'video/mp4') {
-      base64 = await new Promise((resolve, reject) => fs.readFile(filePath, () => resolve()), { encoding: 'base64' });
+      base64 = await new Promise((resolve, reject) => fs.readFile(filePath, (err, data) => {
+        if (err) return reject(err);
+        resolve(data.toString('base64'));
+      }));
     } else {
       base64 = await imageToBase64(filePath);
       dimensions = await imageSizeOf(filePath);
@@ -142,9 +144,11 @@ exports.upload = async (req, res) => {
       await fs.remove(thumbnailPath);
     }
 
+    console.log(`storage.put ${hash}`);
     await storage.put(filePath, CONTAINER.MAIN, `${hash}.${fileType}`);
+    console.log(`storage complete ${hash}`);
     await fs.remove(filePath);
-
+    
     await ImageModel.createImage({
       hash : hash,
       type : fileType,
