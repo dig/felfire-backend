@@ -1,5 +1,9 @@
 {
   "port": 443,
+  "node": {
+    "name": "",
+    "host": ""
+  },
   "database": {
     "host": "",
     "username": "",
@@ -21,6 +25,19 @@
         "templateId": ""
       }
     }
+  },
+  "openstack": {
+    "auth": "https://auth.cloud.ovh.net",
+    "id": "",
+    "password": "",
+    "tenantId": "",
+    "tenantName": "",
+    "region": ""
+  },
+  "thumbnail": {
+    "quality": 90,
+    "width": 130,
+    "height": 130
   },
   "debug": false
 }

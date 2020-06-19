@@ -4,7 +4,7 @@ const crypto = require('crypto');
 exports.isPasswordAndUserMatch = (req, res, next) => {
   UserModel.findByEmail(req.body.email).then((user) => {
     if (!user[0]) {
-      return res.status(400).send({error: 'invalid email or password'});
+      return res.status(400).send({error: 'Invalid email or password.'});
     } else {
       let password = user[0].password;
       let salt = user[0].salt;
@@ -21,7 +21,7 @@ exports.isPasswordAndUserMatch = (req, res, next) => {
 
         return next();
       } else {
-        return res.status(400).send({error: 'invalid email or password'});
+        return res.status(400).send({error: 'Invalid email or password.'});
       }
     }
   });

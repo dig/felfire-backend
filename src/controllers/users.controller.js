@@ -5,7 +5,8 @@ const crypto = require('crypto'),
     config = require('../../config/config.json');
 
 const UserModel = require('../models/users.model'),
-    VerificationModel = require('../models/verifications.model');
+    VerificationModel = require('../models/verifications.model'),
+    CodeModel = require('../models/codes.model');
 
 sgMail.setApiKey(config.email.apiKey);
 
@@ -35,7 +36,18 @@ exports.validate = (method) => {
         body('password', 'Password doesn\'t exist.')
           .exists()
           .isString()
-          .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.')
+          .isLength({ min: 5, max: 60 }).withMessage('Password must be between 5 and 60 characters.'),
+        body('token', 'Captcha doesn\'t exist.')
+          .exists()
+          .isString(),
+        body('code', 'Code doesn\'t exist.')
+          .exists()
+          .isString()
+          .custom(val => {
+            return CodeModel.findByTypeAndCode('alpha', val).then(code => {
+              if (!code) return Promise.reject();
+            });
+          }).withMessage('Code is invalid.'),
       ]   
     }
 
@@ -50,7 +62,10 @@ exports.validate = (method) => {
             return UserModel.findByEmail(val).then(users => {
               if (users.length <= 0) return Promise.reject();
             });
-          }).withMessage('Email doesn\'t exist.')
+          }).withMessage('Email doesn\'t exist.'),
+        body('token', 'Captcha doesn\'t exist.')
+          .exists()
+          .isString()
       ]  
     }
 
@@ -85,22 +100,24 @@ exports.insert = (req, res) => {
       email : req.body.email,
       password : hash,
       salt : salt
-    }).then((user) => VerificationModel.createVerification({
+    })
+    .then((user) => VerificationModel.createVerification({
       userId : user._id,
       provider : 'email',
       token : generatedToken
     }))
+    .then(() => CodeModel.used(req.body.code))
     .then(() => sgMail.send({
       to: req.body.email,
       from: config.email.templates.EMAIL_VERIFICATION.from,
       templateId: config.email.templates.EMAIL_VERIFICATION.templateId,
       dynamic_template_data: {
         username: req.body.username,
-        verify_link: `https://felfire.app/email-verify/${generatedToken}`
+        verify_link: `https://api.felfire.app/email-verify/${generatedToken}`
       },
     }))
     .then(() => res.status(201).send())
-    .catch(() => res.status(500).send());
+    .catch((error) => res.status(500).send());
   }
 };
 
@@ -121,7 +138,7 @@ exports.forgotPassword = (req, res) => {
             templateId: config.email.templates.FORGOT_PASSWORD.templateId,
             dynamic_template_data: {
               username: users[0].username,
-              reset_link: `https://felfire.app/password-reset/${generatedToken}`
+              reset_link: `https://api.felfire.app/password-reset/${generatedToken}`
             },
           })
           .then(() => VerificationModel.createVerification({
